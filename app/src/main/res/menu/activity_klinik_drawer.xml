@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/nav_gallery"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Daftar" />
+        <item
+            android:id="@+id/nomor_antri"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Nomor Antri" />
+        <item
+            android:id="@+id/nav_slideshow"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="Bantuan" />
+        <item
+            android:id="@+id/nav_manage"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Tentang" />
+        <item
+            android:id="@+id/exit"
+            android:icon="@drawable/ic_menu_close"
+            android:title="Keluar" />
+    </group>
+
+
+</menu>

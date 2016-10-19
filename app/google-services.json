@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "458025591682",
+    "firebase_url": "https://daftarpasien-f928e.firebaseio.com",
+    "project_id": "daftarpasien-f928e",
+    "storage_bucket": "daftarpasien-f928e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458025591682:android:198eb106cb544282",
+        "android_client_info": {
+          "package_name": "com.tiketbusku.daftarpasien"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "458025591682-vrgudgsoeo9qjurc5m5bbub2effu0hq7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [{ "current_key": "" }],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
