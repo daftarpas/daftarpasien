@@ -144,8 +144,6 @@ public class NomorAntri extends AppCompatActivity {
                 session.logoutUser();
             }
             else {
-                String token = FirebaseInstanceId.getInstance().getToken();
-                e.setText(token);
                 text.setText("Nama = \t"+nama);
                 text1.setText("Nomor Antrian anda adalah = \t"+nomor_antrian);
                 text2.setText("Klinik = \t"+klinik);

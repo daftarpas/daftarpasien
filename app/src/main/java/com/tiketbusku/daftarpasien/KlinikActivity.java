@@ -1,9 +1,16 @@
 package com.tiketbusku.daftarpasien;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,6 +20,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,6 +34,10 @@ import java.util.HashMap;
 public class KlinikActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     UserSessionManager session;
+    private static final String TAG = KlinikActivity.class.getSimpleName();
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private TextView txtRegId, txtMessage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,40 +45,8 @@ public class KlinikActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        session = new UserSessionManager(getApplicationContext());
-
-//        session.logoutUser();
-        // Check user login (this is the important point)
-        // If User is not logged in , This will redirect user to LoginActivity
-        // and finish current activity from activity stack.
-
-        // get user data from session
-//        HashMap<String, String> user = session.getUserDetails();
-
-        // get ktp
-//        String name = user.get(UserSessionManager.KEY_KTP);
-
-        // get ktp
-//        String tgl = user.get(UserSessionManager.KEY_TGL);
-
-        /*try {
-            Calendar c = Calendar.getInstance();
-            System.out.println("Current time => " + c.getTime());
-
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedDate = df.format(c.getTime());
-
-            Date date1 = df.parse(tgl);
-            Date date2 = df.parse(formattedDate);
-
-            if (date1.compareTo(date2)==0) {
-                session.logoutUser();
-            }
-
-        }
-        catch (ParseException e1) {
-            e1.printStackTrace();
-        }*/
+        txtRegId = (TextView) findViewById(R.id.txt_reg_id);
+        txtMessage = (TextView) findViewById(R.id.txt_push_message);
 
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -74,6 +57,32 @@ public class KlinikActivity extends AppCompatActivity
             }
         });*/
 
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                // checking for type intent filter
+                if (intent.getAction().equals(ConfigFirebase.REGISTRATION_COMPLETE)) {
+                    // gcm successfully registered
+                    // now subscribe to `global` topic to receive app wide notifications
+                    FirebaseMessaging.getInstance().subscribeToTopic(ConfigFirebase.TOPIC_GLOBAL);
+
+                    displayFirebaseRegId();
+
+                } else if (intent.getAction().equals(ConfigFirebase.PUSH_NOTIFICATION)) {
+                    // new push notification is received
+
+                    String message = intent.getStringExtra("message");
+
+                    Toast.makeText(getApplicationContext(), "Push notification: " + message, Toast.LENGTH_LONG).show();
+
+                    txtMessage.setText(message);
+                }
+            }
+        };
+
+        displayFirebaseRegId();
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -82,6 +91,44 @@ public class KlinikActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    // Fetches reg id from shared preferences
+    // and displays on the screen
+    private void displayFirebaseRegId() {
+        SharedPreferences pref = getApplicationContext().getSharedPreferences(ConfigFirebase.SHARED_PREF, 0);
+        String regId = pref.getString("registration_ids", null);
+
+        Log.e(TAG, "Firebase reg id: " + regId);
+
+        if (!TextUtils.isEmpty(regId))
+            txtRegId.setText("Firebase Reg Id: " + regId);
+        else
+            txtRegId.setText("Firebase Reg Id is not received yet!");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // register GCM registration complete receiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(ConfigFirebase.REGISTRATION_COMPLETE));
+
+        // register new push message receiver
+        // by doing this, the activity will be notified each time a new message arrives
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(ConfigFirebase.PUSH_NOTIFICATION));
+
+        // clear the notification area when the app is opened
+
+        NotificationUtils.clearNotifications(getApplicationContext());
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+        super.onPause();
     }
 
     @Override
@@ -142,4 +189,9 @@ public class KlinikActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
+
+
+
 }
