@@ -1,15 +1,12 @@
 package com.tiketbusku.daftarpasien;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.TextUtils;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,23 +17,61 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TableLayout;
 import android.widget.Toast;
 
-import com.google.firebase.messaging.FirebaseMessaging;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
+import android.widget.TableRow;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.TableRow.LayoutParams;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class KlinikActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    UserSessionManager session;
-    private static final String TAG = KlinikActivity.class.getSimpleName();
-    private BroadcastReceiver mRegistrationBroadcastReceiver;
-    private TextView txtRegId, txtMessage;
+
+    List<GetDataAdapter> GetDataAdapter1;
+
+    RecyclerView recyclerView;
+
+    RecyclerView.LayoutManager recyclerViewlayoutManager;
+
+    RecyclerView.Adapter recyclerViewadapter;
+
+    ProgressBar progressBar;
+
+    String GET_JSON_DATA_HTTP_URL = "https://daftarklinikid.000webhostapp.com/admin/Service/getKlinik";
+    String JSON_ID = "id_klinik";
+    String JSON_NAME = "nama";
+    String JSON_SUBJECT = "alamat";
+    String JSON_PHONE_NUMBER = "nomor_telepon";
+
+    Button button;
+
+    JsonArrayRequest jsonArrayRequest ;
+
+    RequestQueue requestQueue ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,47 +80,29 @@ public class KlinikActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        txtRegId = (TextView) findViewById(R.id.txt_reg_id);
-        txtMessage = (TextView) findViewById(R.id.txt_push_message);
 
-        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
-
-        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-
-                // checking for type intent filter
-                if (intent.getAction().equals(ConfigFirebase.REGISTRATION_COMPLETE)) {
-                    // gcm successfully registered
-                    // now subscribe to `global` topic to receive app wide notifications
-                    FirebaseMessaging.getInstance().subscribeToTopic(ConfigFirebase.TOPIC_GLOBAL);
-
-                    displayFirebaseRegId();
-
-                } else if (intent.getAction().equals(ConfigFirebase.PUSH_NOTIFICATION)) {
-                    // new push notification is received
-
-                    String message = intent.getStringExtra("message");
-
-                    Toast.makeText(getApplicationContext(), "Push notification: " + message, Toast.LENGTH_LONG).show();
-
-                    txtMessage.setText(message);
-                }
-            }
-        };
-
-        displayFirebaseRegId();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+
+        GetDataAdapter1 = new ArrayList<>();
+
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView1);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar1);
+
+        recyclerView.setHasFixedSize(true);
+
+        recyclerViewlayoutManager = new LinearLayoutManager(this);
+
+        recyclerView.setLayoutManager(recyclerViewlayoutManager);
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        JSON_DATA_WEB_CALL();
+
+
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -93,42 +110,59 @@ public class KlinikActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
-    // Fetches reg id from shared preferences
-    // and displays on the screen
-    private void displayFirebaseRegId() {
-        SharedPreferences pref = getApplicationContext().getSharedPreferences(ConfigFirebase.SHARED_PREF, 0);
-        String regId = pref.getString("registration_ids", null);
+    public void JSON_DATA_WEB_CALL(){
 
-        Log.e(TAG, "Firebase reg id: " + regId);
+        jsonArrayRequest = new JsonArrayRequest(GET_JSON_DATA_HTTP_URL,
 
-        if (!TextUtils.isEmpty(regId))
-            txtRegId.setText("Firebase Reg Id: " + regId);
-        else
-            txtRegId.setText("Firebase Reg Id is not received yet!");
+                new Response.Listener<JSONArray>() {
+                    @Override
+                    public void onResponse(JSONArray response) {
+
+                        progressBar.setVisibility(View.GONE);
+
+                        JSON_PARSE_DATA_AFTER_WEBCALL(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+
+        requestQueue = Volley.newRequestQueue(this);
+
+        requestQueue.add(jsonArrayRequest);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public void JSON_PARSE_DATA_AFTER_WEBCALL(JSONArray array){
 
-        // register GCM registration complete receiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
-                new IntentFilter(ConfigFirebase.REGISTRATION_COMPLETE));
+        for(int i = 0; i<array.length(); i++) {
 
-        // register new push message receiver
-        // by doing this, the activity will be notified each time a new message arrives
-        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
-                new IntentFilter(ConfigFirebase.PUSH_NOTIFICATION));
+            GetDataAdapter GetDataAdapter2 = new GetDataAdapter();
 
-        // clear the notification area when the app is opened
+            JSONObject json = null;
+            try {
+                json = array.getJSONObject(i);
 
-        NotificationUtils.clearNotifications(getApplicationContext());
-    }
+                GetDataAdapter2.setId(json.getInt(JSON_ID));
 
-    @Override
-    protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
-        super.onPause();
+                GetDataAdapter2.setName(json.getString(JSON_NAME));
+
+                GetDataAdapter2.setSubject(json.getString(JSON_SUBJECT));
+
+                GetDataAdapter2.setPhone_number(json.getString(JSON_PHONE_NUMBER));
+
+            } catch (JSONException e) {
+
+                e.printStackTrace();
+            }
+            GetDataAdapter1.add(GetDataAdapter2);
+        }
+
+        recyclerViewadapter = new RecyclerViewAdapter(GetDataAdapter1, this);
+
+        recyclerView.setAdapter(recyclerViewadapter);
     }
 
     @Override
@@ -170,28 +204,22 @@ public class KlinikActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_gallery) {
-            Intent intent = new Intent(this, DaftarActivity.class);
-            startActivity(intent);
-        } else if (id==R.id.nomor_antri){
+            // Handle the camera action
+            Intent i = new Intent(this, DaftarActivity.class);
+            startActivity(i);
+        } else if (id == R.id.nomor_antri) {
             Intent i = new Intent(this, NomorAntri.class);
             startActivity(i);
-
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
 
         } else if (id == R.id.exit) {
-            finish();
-            System.exit(0);
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
-
-
-
-
 }

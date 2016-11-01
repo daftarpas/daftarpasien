@@ -67,7 +67,7 @@ public class DaftarActivity extends AppCompatActivity {
 
     JSONParser jParser = new JSONParser();
     ProgressDialog pDialog;
-    private static String url = "https://daftarklinikid.000webhostapp.com/Service/daftar";
+    private static String url = "https://daftarklinikid.000webhostapp.com/admin/Service/daftar";
 
     private ProgressDialog waiDialog;
 
@@ -254,7 +254,7 @@ public class DaftarActivity extends AppCompatActivity {
             String result="";
             try{
                 HttpClient httpclient=new DefaultHttpClient();
-                HttpPost httppost= new HttpPost("https://daftarklinikid.000webhostapp.com/Service/getPoli");
+                HttpPost httppost= new HttpPost("https://daftarklinikid.000webhostapp.com/admin/Service/getPoli");
                 HttpResponse response=httpclient.execute(httppost);
                 HttpEntity entity = response.getEntity();
                 // Get our response as a String.
