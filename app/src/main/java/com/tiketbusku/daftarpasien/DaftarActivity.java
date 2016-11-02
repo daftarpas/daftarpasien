@@ -82,7 +82,6 @@ public class DaftarActivity extends AppCompatActivity {
 
         session = new UserSessionManager(getApplicationContext());
         if (session.checkLogout()) {
-            Toast.makeText(DaftarActivity.this, "Anda Telah Melakukan Pendaftaran Untuk Pemeriksaan Hari Ini", Toast.LENGTH_LONG).show();
             finish();
         }
 
