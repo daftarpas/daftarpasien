@@ -69,6 +69,15 @@
                 android:inputType="number" />
         </android.support.design.widget.TextInputLayout>
 
+        <Spinner android:id="@+id/klinik"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"/>
+
+        <Spinner android:id="@+id/id_klinik"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
         <Spinner android:id="@+id/poli"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>

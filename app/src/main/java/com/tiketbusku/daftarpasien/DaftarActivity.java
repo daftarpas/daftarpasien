@@ -49,7 +49,9 @@ public class DaftarActivity extends AppCompatActivity {
 
     ArrayList<String> listItems=new ArrayList<>();
     ArrayList<String> listItems1=new ArrayList<>();
-    ArrayAdapter<String> adapter, adapter1;
+    ArrayList<String> listItemsK=new ArrayList<>();
+    ArrayList<String> listItemsK1=new ArrayList<>();
+    ArrayAdapter<String> adapter, adapter1, adap, adap1;
     private String idPoli;
 
     // API urls
@@ -59,11 +61,11 @@ public class DaftarActivity extends AppCompatActivity {
     // API urls
     // Url to create new category
     // Url to get all categories
-    private Spinner nPoli, nId;
+    private Spinner nPoli, nId, nKlinik, nIdKlinik;
     private Button nBtnDaftar;
     private EditText nNoKTP, nNama, nUsia, nAlamat, nKeluhan, nNoTelp;
     String[] id, nama;
-    String item;
+    String item, itemk;
 
     JSONParser jParser = new JSONParser();
     ProgressDialog pDialog;
@@ -95,6 +97,8 @@ public class DaftarActivity extends AppCompatActivity {
 
 
         nPoli = (Spinner) findViewById(R.id.poli);
+        nKlinik = (Spinner) findViewById(R.id.klinik);
+        nIdKlinik = (Spinner) findViewById(R.id.id_klinik);
         nId = (Spinner) findViewById(R.id.id_poli);
         nBtnDaftar = (Button) findViewById(R.id.btn_daftar);
         nNoKTP = (EditText) findViewById(R.id.input_ktp);
@@ -103,6 +107,44 @@ public class DaftarActivity extends AppCompatActivity {
         nNoTelp = (EditText) findViewById(R.id.input_telepon);
         nAlamat = (EditText) findViewById(R.id.input_alamat);
         nKeluhan = (EditText) findViewById(R.id.input_keluhan);
+
+
+
+        nIdKlinik.setVisibility(View.GONE);
+        adap=new ArrayAdapter<String>(this,R.layout.spinner_layout,R.id.txt,listItemsK);
+        nKlinik.setAdapter(adap);
+
+        adap1=new ArrayAdapter<String>(this,R.layout.spinner_layout,R.id.txt,listItemsK1);
+        nIdKlinik.setAdapter(adap1);
+
+
+        nKlinik.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                nIdKlinik.setSelection(position);
+                itemk = nIdKlinik.getSelectedItem().toString();
+                //Toast.makeText(DaftarActivity.this, item, Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        nIdKlinik.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                nKlinik.setSelection(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
 
 
         nId.setVisibility(View.GONE);
@@ -151,95 +193,15 @@ public class DaftarActivity extends AppCompatActivity {
         });
     }
 
-    public class input extends AsyncTask<String, String, String>
-    {
-
-        String success, message;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            pDialog = new ProgressDialog(DaftarActivity.this);
-            pDialog.setMessage("Lagi Proses bro...");
-            pDialog.setIndeterminate(false);
-            pDialog.show();
-        }
-
-        @Override
-        protected String doInBackground(String... arg0) {
-            String ktp = nNoKTP.getText().toString();
-            String nama = nNama.getText().toString();
-            String usia = nUsia.getText().toString();
-            String alamat = nAlamat.getText().toString();
-            String keluhan = nKeluhan.getText().toString();
-            String telp = nNoTelp.getText().toString();
-            String token = FirebaseInstanceId.getInstance().getToken();
-
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("id_poli", item));
-            params.add(new BasicNameValuePair("no_ktp", ktp));
-            params.add(new BasicNameValuePair("nama", nama));
-            params.add(new BasicNameValuePair("usia", usia));
-            params.add(new BasicNameValuePair("alamat", alamat));
-            params.add(new BasicNameValuePair("keluhan", keluhan));
-            params.add(new BasicNameValuePair("telp", telp));
-            params.add(new BasicNameValuePair("token", token));
-
-            JSONObject json = jParser.makeHttpRequest(url, "POST", params);
-
-            try {
-                success = json.getString("success");
-                message = json.getString("message");
-
-            } catch (Exception e) {
-                Toast.makeText(getApplicationContext(), "Error",
-                        Toast.LENGTH_LONG).show();
-            }
-            return null;
-        }
-        protected void onPostExecute(String file_url) {
-            // dismiss the dialog once done
-            pDialog.dismiss();
-
-            if (success.equals("1"))
-            {
-                Calendar c = Calendar.getInstance();
-                System.out.println("Current time => " + c.getTime());
-
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-                String formattedDate = df.format(c.getTime());
-
-                Toast.makeText(getApplicationContext(), "Sukses broo!!!", Toast.LENGTH_LONG).show();
-                session.createUserLoginSession( nNoKTP.getText().toString(), formattedDate);
-
-                // Starting MainActivity
-                Intent i = new Intent(getApplicationContext(), NomorAntri.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                // Add new Flag to start new Activity
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
-
-                finish();
-                /*Intent i = new Intent(DaftarActivity.this, NomorAntri.class);
-                startActivity(i);*/
-            }
-            else if (success.equals("2"))
-            {
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-            else if (success.equals("3"))
-            {
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        }
-    }
 
     public void onStart(){
         super.onStart();
         BackTask bt=new BackTask();
+        BackTaskK btk = new BackTaskK();
         bt.execute();
+        btk.execute();
     }
+
 
     private class BackTask extends AsyncTask<Void,Void,Void> {
         ArrayList<String> list, list1;
@@ -306,4 +268,164 @@ public class DaftarActivity extends AppCompatActivity {
             adapter1.notifyDataSetChanged();
         }
     }
+
+
+
+
+    private class BackTaskK extends AsyncTask<Void,Void,Void> {
+        ArrayList<String> listk, listk1;
+        protected void onPreExecute(){
+            super.onPreExecute();
+            listk=new ArrayList<>();
+            listk1=new ArrayList<>();
+        }
+        protected Void doInBackground(Void...params){
+            InputStream is=null;
+            String result="";
+            try{
+                HttpClient httpclient=new DefaultHttpClient();
+                HttpPost httppost= new HttpPost("https://daftarklinikid.000webhostapp.com/admin/Service/getKlinik");
+                HttpResponse response=httpclient.execute(httppost);
+                HttpEntity entity = response.getEntity();
+                // Get our response as a String.
+                is = entity.getContent();
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+
+            //convert response to string
+            try{
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is,"utf-8"));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    result+=line;
+                }
+                is.close();
+                //result=sb.toString();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            // parse json data
+            try{
+                JSONArray jArray =new JSONArray(result);
+                JSONObject jsonObject = null;
+                id = new String[jArray.length()];
+                nama = new String[jArray.length()];
+                for(int i=0;i<jArray.length();i++){
+                    jsonObject=jArray.getJSONObject(i);
+                    id[i] = jsonObject.getString("id_klinik");
+                    nama[i] = jsonObject.getString("nama");
+                    // add interviewee name to arraylist
+                    //idPoli = jsonObject.getString("id_poli");
+                    //list.add(jsonObject.getString("nama"));
+                }
+                for(int i=0;i<nama.length;i++)
+                {
+                    listk1.add(id[i]);
+                    listk.add(nama[i]);
+                }
+            }
+            catch(JSONException e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+        protected void onPostExecute(Void result){
+            listItemsK.addAll(listk);
+            listItemsK1.addAll(listk1);
+            adap.notifyDataSetChanged();
+            adap1.notifyDataSetChanged();
+        }
+    }
+
+
+
+    public class input extends AsyncTask<String, String, String>
+    {
+
+        String success, message;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(DaftarActivity.this);
+            pDialog.setMessage("Lagi Proses bro...");
+            pDialog.setIndeterminate(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... arg0) {
+            String ktp = nNoKTP.getText().toString();
+            String nama = nNama.getText().toString();
+            String usia = nUsia.getText().toString();
+            String alamat = nAlamat.getText().toString();
+            String keluhan = nKeluhan.getText().toString();
+            String telp = nNoTelp.getText().toString();
+            String token = FirebaseInstanceId.getInstance().getToken();
+
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("id_poli", item));
+            params.add(new BasicNameValuePair("id_klinik", itemk));
+            params.add(new BasicNameValuePair("no_ktp", ktp));
+            params.add(new BasicNameValuePair("nama", nama));
+            params.add(new BasicNameValuePair("usia", usia));
+            params.add(new BasicNameValuePair("alamat", alamat));
+            params.add(new BasicNameValuePair("keluhan", keluhan));
+            params.add(new BasicNameValuePair("telp", telp));
+            params.add(new BasicNameValuePair("token", token));
+
+            JSONObject json = jParser.makeHttpRequest(url, "POST", params);
+
+            try {
+                success = json.getString("success");
+                message = json.getString("message");
+
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(), "Error",
+                        Toast.LENGTH_LONG).show();
+            }
+            return null;
+        }
+        protected void onPostExecute(String file_url) {
+            // dismiss the dialog once done
+            pDialog.dismiss();
+
+            if (success.equals("1"))
+            {
+                Calendar c = Calendar.getInstance();
+                System.out.println("Current time => " + c.getTime());
+
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                String formattedDate = df.format(c.getTime());
+
+                Toast.makeText(getApplicationContext(), "Sukses broo!!!", Toast.LENGTH_LONG).show();
+                session.createUserLoginSession( nNoKTP.getText().toString(), formattedDate);
+
+                // Starting MainActivity
+                Intent i = new Intent(getApplicationContext(), NomorAntri.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                // Add new Flag to start new Activity
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+
+                finish();
+                /*Intent i = new Intent(DaftarActivity.this, NomorAntri.class);
+                startActivity(i);*/
+            }
+            else if (success.equals("2"))
+            {
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+            }
+            else if (success.equals("3"))
+            {
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+
+
+
 }
