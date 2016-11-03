@@ -30,6 +30,10 @@ public class NomorAntri extends AppCompatActivity {
     JSONParser jParser = new JSONParser();
     ProgressDialog pDialog;
 
+    String newString;
+    TextView message;
+
+
     // User Session Manager Class
     UserSessionManager session;
     TextView text, text1, text2, text3, text4, text5, text6;
@@ -49,6 +53,18 @@ public class NomorAntri extends AppCompatActivity {
         text4 = (TextView) findViewById(R.id.textView7);
         text5 = (TextView) findViewById(R.id.textView8);
         text6 = (TextView) findViewById(R.id.textView9);
+
+        Bundle extras = getIntent().getExtras();
+        if(extras == null) {
+            newString= "nothing";
+        } else {
+            newString= extras.getString("message");
+        }
+
+        message  = (TextView) findViewById(R.id.string);
+
+        message.setText(newString);
+
         // Session class instance
         session = new UserSessionManager(getApplicationContext());
         if (session.checkLogin()) {
